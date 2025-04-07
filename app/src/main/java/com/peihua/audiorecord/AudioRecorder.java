@@ -24,7 +24,6 @@ public class AudioRecorder {
     public static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
     public static final int SAMPLE_RATE_INHZ = 44100;
     private int minBuffer;
-    private int inSamplerate = 8000;
 
     private String pcmFilePath;
     private boolean isRecording = false;
@@ -47,14 +46,14 @@ public class AudioRecorder {
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     public void startRecordingPcm() {
-        minBuffer = AudioRecord.getMinBufferSize(inSamplerate, AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT);
+        minBuffer = AudioRecord.getMinBufferSize(SAMPLE_RATE_INHZ, CHANNEL_CONFIG,
+                AUDIO_FORMAT);
 
         addLog("Initializing audio recorder...");
         audioRecord = new AudioRecord(
-                MediaRecorder.AudioSource.MIC, inSamplerate,
-                AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT, minBuffer);
+                MediaRecorder.AudioSource.MIC, SAMPLE_RATE_INHZ,
+                CHANNEL_CONFIG,
+                AUDIO_FORMAT, minBuffer);
 
         // Start audio recording
         addLog("Creating output file stream");
@@ -69,7 +68,7 @@ public class AudioRecorder {
         updateStatus("Recording...");
         audioRecord.startRecording();
 
-        short[] buffer = new short[minBuffer]; // Use minBuffer for reading
+        byte[] buffer = new byte[minBuffer]; // Use minBuffer for reading
         int bytesRead;
         while (isRecording) {
             addLog("reading to short array buffer, buffer sze- " + minBuffer);
@@ -79,71 +78,7 @@ public class AudioRecorder {
                 addLog("encoding bytes to mp3 buffer..");
                 try {
                     addLog("writing mp3 buffer to outputstream with " + bytesRead + " bytes");
-                    for (int i = 0; i < bytesRead; i++) {
-                        // Ensure we write raw PCM data correctly
-                        dataOutputStream.writeShort(buffer[i]);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    break; // Exit if there's an error while writing
-                }
-            }
-        }
-
-        addLog("stopped recording");
-        updateStatus("Recording stopped");
-
-        addLog("flushing final mp3buffer");
-        try {
-            dataOutputStream.flush(); // Flush any remaining data in the buffer
-            dataOutputStream.close();  // Close the data output stream
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        addLog("releasing audio recorder");
-        audioRecord.stop();
-        audioRecord.release();
-        isRecording = false;
-    }
-
-    @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    public void startRecordingWave() {
-        minBuffer = AudioRecord.getMinBufferSize(inSamplerate, AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT);
-
-        addLog("Initializing audio recorder...");
-        audioRecord = new AudioRecord(
-                MediaRecorder.AudioSource.MIC, inSamplerate,
-                AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_PCM_16BIT, minBuffer);
-
-        // Start audio recording
-        addLog("Creating output file stream");
-        try {
-            outputStream = new FileOutputStream(pcmFilePath);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        }
-        BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
-        DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream);
-        addLog("started audio recording");
-        updateStatus("Recording...");
-        audioRecord.startRecording();
-
-        short[] buffer = new short[minBuffer]; // Use minBuffer for reading
-        int bytesRead;
-        while (isRecording) {
-            addLog("reading to short array buffer, buffer sze- " + minBuffer);
-            bytesRead = audioRecord.read(buffer, 0, buffer.length);
-            addLog("bytes read=" + bytesRead);
-            if (bytesRead > 0) {
-                addLog("encoding bytes to mp3 buffer..");
-                try {
-                    addLog("writing mp3 buffer to outputstream with " + bytesRead + " bytes");
-                    for (int i = 0; i < bytesRead; i++) {
-                        // Ensure we write raw PCM data correctly
-                        dataOutputStream.writeShort(buffer[i]);
-                    }
+                    outputStream.write(buffer, 0, bytesRead);
                 } catch (IOException e) {
                     e.printStackTrace();
                     break; // Exit if there's an error while writing
@@ -170,14 +105,12 @@ public class AudioRecorder {
     /**
      * 开始录音&#xff0c;返回临时缓存文件&#xff08;.pcm&#xff09;的文件路径
      */
-    public String startRecordAudio(File pcmFile) {
-        String audioCacheFilePath = pcmFile.getAbsolutePath();
+    public String startRecordAudio() {
+        String audioCacheFilePath = pcmFilePath;
         try {
             // 获取最小录音缓存大小&#xff0c;
             int minBufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE_INHZ, CHANNEL_CONFIG, AUDIO_FORMAT);
             this.audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE_INHZ, CHANNEL_CONFIG, AUDIO_FORMAT, minBufferSize);
-
-
             // 开始录音
             this.isRecording = true;
             audioRecord.startRecording();
@@ -185,7 +118,6 @@ public class AudioRecorder {
             // 创建数据流&#xff0c;将缓存导入数据流
             File file = new File(audioCacheFilePath);
             Logcat.i( "audio cache pcm file path:" + audioCacheFilePath);
-
             /*
              *  以防万一&#xff0c;看一下这个文件是不是存在&#xff0c;如果存在的话&#xff0c;先删除掉
              */

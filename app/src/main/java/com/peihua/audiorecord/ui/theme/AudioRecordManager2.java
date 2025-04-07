@@ -92,11 +92,16 @@ public class AudioRecordManager2 {
 
     @SuppressLint("MissingPermission")
     public void startRecordPcm() {
-//        audioRecorder.startRecordingPcm();
-        audioRecorder.startRecordAudio(new File(pcmFilePath));
+        audioRecorder.startRecordingPcm();
+//        audioRecorder.startRecordAudio();
     }
     public void convertPcmToWav() {
-        pcmToWavUtil.pcmToWav(pcmFilePath, convertFilePath);
+        File pcmFile = new File(pcmFilePath);
+        File wavFile = new File(pcmFile.getParentFile(), "convertOutput.wav");
+        if (wavFile.exists()) {
+            wavFile.delete();
+        }
+        pcmToWavUtil.pcmToWav(pcmFilePath, wavFile.getAbsolutePath());
     }
     public void convertPcmToMp3(Context context) throws IOException {
         addLog("Initialising lame..");
@@ -106,14 +111,14 @@ public class AudioRecordManager2 {
         if (mp3File.exists()) {
             mp3File.delete();
         }
-        PcmToMp3Converter.convertPcmToMp3(context, pcmFile.getAbsolutePath(), mp3File.getAbsolutePath());
+//        PcmToMp3Converter.convertPcmToMp3(context,AudioRecorder.SAMPLE_RATE_INHZ,2, pcmFile.getAbsolutePath(), mp3File.getAbsolutePath());
 //         pcmConvertMp3.convertWaveToMp3(pcmFile, mp3File);
 //        convertFilePath = mp3File.getAbsolutePath();
 //        mediaDecoder.setDataSrcPath(pcmFile.getAbsolutePath());
 //        mediaDecoder.setDataDestPath(mp3File.getAbsolutePath());
 //        mediaDecoder.start();
 //        PcmToMp3.convertAudioFiles(pcmFile.getAbsolutePath(), mp3File.getAbsolutePath());
-//        PCMDecoder.encodeToMp3(pcmFilePath, 1, 96000, 22000, mp3File.getAbsolutePath());
+        PCMDecoder.encodeToMp3(pcmFilePath, 2, 96000, AudioRecorder.SAMPLE_RATE_INHZ, mp3File.getAbsolutePath());
     }
 
     public void convertPcmToMp32() throws IOException {

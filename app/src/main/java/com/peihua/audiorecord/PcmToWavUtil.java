@@ -19,14 +19,6 @@ import java.io.IOException;
  * 描述&#xff1a;pcm格式的音频转换为wav格式的工具类
  */
 public class PcmToWavUtil {
-    // 采样率&#xff0c;现在能够保证在所有设备上使用的采样率是44100Hz, 但是其他的采样率&#xff08;22050, 16000, 11025&#xff09;在一些设备上也可以使用。
-    public static final int SAMPLE_RATE_INHZ = 44100;
-
-    // 声道数。CHANNEL_IN_MONO and CHANNEL_IN_STEREO. 其中CHANNEL_IN_MONO是可以保证在所有设备能够使用的。
-    public static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_STEREO;
-
-    // 返回的音频数据的格式。 ENCODING_PCM_8BIT, ENCODING_PCM_16BIT, and ENCODING_PCM_FLOAT.
-    public static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
     private int mBufferSize; //缓存的音频大小
     private int mSampleRate = 44100;// 此处的值必须与录音时的采样率一致
     private int mChannel = AudioFormat.CHANNEL_IN_STEREO; //立体声
@@ -177,7 +169,7 @@ public class PcmToWavUtil {
             bits = bits * 256 + buffer[0x22];
             Logcat.i( "pcmlen=" + pcmlen + ",channel=" + channel + ",bits=" + bits);
             AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC,
-                    SAMPLE_RATE_INHZ * 2,
+                    mSampleRate * 2,
                     channel,
                     AudioFormat.ENCODING_PCM_16BIT,
                     pcmlen,
