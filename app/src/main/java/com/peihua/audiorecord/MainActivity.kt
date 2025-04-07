@@ -133,6 +133,15 @@ class MainActivity : ComponentActivity() {
                         }
                         Spacer(modifier = Modifier.padding(10.dp))
                         Button(onClick = {
+//                            logs.clear()
+                            scope.launch {
+                                AudioRecordManager2.getInstance().convertPcmToWav()
+                            }
+                        }) {
+                            Text("Pcm转wav")
+                        }
+                        Spacer(modifier = Modifier.padding(10.dp))
+                        Button(onClick = {
                             AudioRecordManager.getInstance().startPlayMp3(AudioRecordManager2.getInstance().convertFilePath)
                             isPlayMp3.value = !isPlayMp3.value
                         }) {

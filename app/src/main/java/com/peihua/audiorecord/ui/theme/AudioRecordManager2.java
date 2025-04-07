@@ -16,6 +16,7 @@ import com.peihua.audiorecord.MediaDecoder;
 import com.peihua.audiorecord.PcmConvertMp3;
 import com.peihua.audiorecord.PcmToMp3;
 import com.peihua.audiorecord.PcmToMp3Converter;
+import com.peihua.audiorecord.PcmToWavUtil;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -42,6 +43,7 @@ public class AudioRecordManager2 {
     private AudioRecorder audioRecorder = new AudioRecorder();
     private PcmConvertMp3 pcmConvertMp3 = new PcmConvertMp3();
     private MediaDecoder mediaDecoder = new MediaDecoder();
+    private PcmToWavUtil pcmToWavUtil = new PcmToWavUtil();
 
     int minBuffer;
     int inSamplerate = 8000;
@@ -90,9 +92,12 @@ public class AudioRecordManager2 {
 
     @SuppressLint("MissingPermission")
     public void startRecordPcm() {
-        audioRecorder.startRecordingPcm();
+//        audioRecorder.startRecordingPcm();
+        audioRecorder.startRecordAudio(new File(pcmFilePath));
     }
-
+    public void convertPcmToWav() {
+        pcmToWavUtil.pcmToWav(pcmFilePath, convertFilePath);
+    }
     public void convertPcmToMp3(Context context) throws IOException {
         addLog("Initialising lame..");
 //        File pcmFile = new File("/storage/emulated/0/Android/data/com.peihua.audiorecord/files/Music/test112233.pcm");

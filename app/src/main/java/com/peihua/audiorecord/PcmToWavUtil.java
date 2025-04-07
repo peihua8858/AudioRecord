@@ -162,8 +162,8 @@ public class PcmToWavUtil {
             FileInputStream fis = new FileInputStream(wavFile);
             byte[] buffer = new byte[1024 * 1024 * 2];//2M
             int len = fis.read(buffer);
-            Log.i(TAG, "fis len=" + len);
-            Log.i(TAG, "0:" + (char) buffer[0]);
+            Logcat.i( "fis len=" + len);
+            Logcat.i( "0:" + (char) buffer[0]);
             int pcmlen = 0;
             pcmlen += buffer[0x2b];
             pcmlen = pcmlen * 256 + buffer[0x2a];
@@ -175,7 +175,7 @@ public class PcmToWavUtil {
 
             int bits = buffer[0x23];
             bits = bits * 256 + buffer[0x22];
-            Log.i(TAG, "pcmlen=" + pcmlen + ",channel=" + channel + ",bits=" + bits);
+            Logcat.i( "pcmlen=" + pcmlen + ",channel=" + channel + ",bits=" + bits);
             AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC,
                     SAMPLE_RATE_INHZ * 2,
                     channel,
