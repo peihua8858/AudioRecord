@@ -11,6 +11,7 @@ import com.peihua.audiorecord.ui.theme.AudioRecordManager2;
 
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -102,7 +103,7 @@ public class AudioRecorder {
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
     public void startRecordingWave() {
         minBuffer = AudioRecord.getMinBufferSize(inSamplerate, AudioFormat.CHANNEL_IN_MONO,
-                AudioFormat.ENCODING_DEFAULT);
+                AudioFormat.ENCODING_PCM_16BIT);
 
         addLog("Initializing audio recorder...");
         audioRecord = new AudioRecord(
@@ -158,6 +159,91 @@ public class AudioRecorder {
         audioRecord.stop();
         audioRecord.release();
         isRecording = false;
+    }
+
+    /**
+     * 开始录音&#xff0c;返回临时缓存文件&#xff08;.pcm&#xff09;的文件路径
+     */
+    protected String startRecordAudio() {
+        String audioCacheFilePath = this.getExternalFilesDir(Environment.DIRECTORY_MUSIC).getAbsolutePath() + "/" + "jerboa_audio_cache.pcm";
+        try{
+            // 获取最小录音缓存大小&#xff0c;
+            int minBufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE_INHZ, CHANNEL_CONFIG, AUDIO_FORMAT);
+            this.audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE_INHZ, CHANNEL_CONFIG, AUDIO_FORMAT, minBufferSize);
+
+
+            // 开始录音
+            this.isRecording = true;
+            audioRecord.startRecording();
+
+            // 创建数据流&#xff0c;将缓存导入数据流
+            this.recordingAudioThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    File file = new File(audioCacheFilePath);
+                    Log.i(TAG, "audio cache pcm file path:" + audioCacheFilePath);
+
+                    /*
+                     *  以防万一&#xff0c;看一下这个文件是不是存在&#xff0c;如果存在的话&#xff0c;先删除掉
+                     */
+                    if (file.exists()) {
+                        file.delete();
+                    }
+
+                    try {
+                        file.createNewFile();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    FileOutputStream fos = null;
+                    try {
+                        fos = new FileOutputStream(file);
+                    } catch (FileNotFoundException e) {
+                        e.printStackTrace();
+                        Log.e(TAG, "临时缓存文件未找到");
+                    }
+                    if (fos == null) {
+                        return;
+                    }
+
+                    byte[] data = new byte[minBufferSize];
+                    int read;
+                    if (fos != null) {
+                        while (isRecording && !recordingAudioThread.isInterrupted()) {
+                            read = audioRecord.read(data, 0, minBufferSize);
+                            if (AudioRecord.ERROR_INVALID_OPERATION != read) {
+                                try {
+                                    fos.write(data);
+                                    Log.i("audioRecordTest", "写录音数据-&gt;" + read);
+                                } catch (IOException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    }
+
+                    try {
+                        // 关闭数据流
+                        fos.close();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+
+            this.recordingAudioThread.start();
+        }
+        catch(IllegalStateException e){
+            Log.w(TAG,"需要获取录音权限&#xff01;");
+            this.checkIfNeedRequestRunningPermission();
+        }
+        catch(SecurityException e){
+            Log.w(TAG,"需要获取录音权限&#xff01;");
+            this.checkIfNeedRequestRunningPermission();
+        }
+
+        return audioCacheFilePath;
     }
     private void addLog(final String log) {
         if (mLogger != null) {
