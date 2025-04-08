@@ -58,7 +58,14 @@ class AudioRecorder(
             }
             return count
         }
-
+    val bitRate: Int
+        get() {
+            return 16
+        }
+    val byteRate: Int
+        get() {
+            return simpleRateInHz * channelCount * bitRate / 8
+        }
     fun setLogger(mLogger: (String) -> Unit) {
         this.mLogger = mLogger
     }
@@ -79,7 +86,7 @@ class AudioRecorder(
         )
 
         addLog("Initializing audio recorder...")
-        audioRecord = AudioRecord(
+       val audioRecord = AudioRecord(
             MediaRecorder.AudioSource.MIC, simpleRateInHz,
             channelConfig,
             audioFormat, minBuffer
@@ -96,7 +103,12 @@ class AudioRecorder(
         val dataOutputStream = DataOutputStream(bufferedOutputStream)
         addLog("started audio recording")
         updateStatus("Recording...")
-        audioRecord!!.startRecording()
+
+        this.audioRecord = audioRecord
+        // 开始录音
+        this.isRecording = true
+        this.mChannelCount = audioRecord.channelCount
+        audioRecord.startRecording()
 
         val buffer = ByteArray(minBuffer) // Use minBuffer for reading
         var bytesRead: Int
@@ -152,7 +164,7 @@ class AudioRecorder(
             // 开始录音
             this.isRecording = true
             this.mChannelCount = audioRecord.channelCount
-            audioRecord!!.startRecording()
+            audioRecord.startRecording()
 
             // 创建数据流&#xff0c;将缓存导入数据流
             val file = File(audioCacheFilePath)

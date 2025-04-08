@@ -75,6 +75,9 @@ class AudioRecordManager {
         audioConverter.convertPcmToWav()
     }
 
+    fun convertPcmToOpus() {
+        audioConverter.convertOpusToMp3("")
+    }
 
     companion object {
 

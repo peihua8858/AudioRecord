@@ -4,15 +4,22 @@ import android.media.MediaExtractor
 import android.media.MediaFormat
 import java.io.File
 
-class MediaDecoder(val filePath: String, val addLog: (String) -> Unit = {}) {
+class MediaDecoder(private val filePath: String, val addLog: (String) -> Unit = {}) {
     constructor(file: File, addLog: (String) -> Unit = {}) : this(file.absolutePath, addLog)
 
     val mediaInfo: MediaInfo
 
     init {
         val mediaExtractor = MediaExtractor()
-        mediaExtractor.setDataSource(filePath)
-        addLog("MediaExtractor init success");
+        addLog("MediaExtractor init success, filePath:$filePath");
+        try {
+            mediaExtractor.setDataSource(filePath)
+            addLog("MediaExtractor setDataSource success, filePath:$filePath");
+        } catch (e: Exception) {
+            e.printStackTrace()
+           addLog("MediaExtractor setDataSource error, filePath:$filePath");
+        }
+
         val mediaFormat = mediaExtractor.getTrackFormat(0)
         addLog("MediaFormat init success");
         val bitRate = mediaFormat.getLong(MediaFormat.KEY_BIT_RATE)

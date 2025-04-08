@@ -1,13 +1,10 @@
-package com.peihua.audiorecord;
+package com.peihua.audiorecord
 
-import android.content.Context;
+import android.content.Context
+import com.arthenica.ffmpegkit.FFmpegKit
+import com.arthenica.ffmpegkit.ReturnCode
 
-import com.arthenica.ffmpegkit.FFmpegKit;
-import com.arthenica.ffmpegkit.FFmpegSession;
-import com.arthenica.ffmpegkit.ReturnCode;
-
-
-public class PcmToMp3Converter {
+object FFmpegConverter {
     /**
      * 参数详细说明
      * -f s16le:
@@ -38,16 +35,52 @@ public class PcmToMp3Converter {
      * @param pcmFilePath
      * @param mp3FilePath
      */
-    public static void convertPcmToMp3(Context context, int sampleRate,int channels, String pcmFilePath, String mp3FilePath) {
+    fun convertPcmToMp3(
+        sampleRate: Int,
+        channels: Int,
+        pcmFilePath: String,
+        mp3FilePath: String?,
+        addLog: (String) -> Unit
+    ) {
         // FFmpeg 命令字符串
-        String cmd = String.format("-f s16le -ar " + sampleRate + " -ac "+channels+" -i %s -acodec libmp3lame %s", pcmFilePath, mp3FilePath);
-        FFmpegSession session = FFmpegKit.execute(cmd);
+        addLog("组装FFmpeg 命令")
+        val cmd = String.format(
+            "-f s16le -ar " + sampleRate + " -ac " + channels + " -i %s -acodec libmp3lame %s",
+            pcmFilePath,
+            mp3FilePath
+        )
+        addLog("FFmpeg 命令: $cmd")
+        addLog("执行FFmpeg 命令")
+        val session = FFmpegKit.execute(cmd)
+        addLog("执行FFmpeg 命令完成")
         if (ReturnCode.isSuccess(session.getReturnCode())) {
             // Handle success case
-            Logcat.d("Conversion Success with return code: " + session.getReturnCode());
+            addLog("Conversion Success ")
+            Logcat.d("Conversion Success with return code: " + session.getReturnCode())
         } else {
             // Handle failure case
-            Logcat.d("Conversion failed with return code: " + session.getReturnCode());
+            addLog("Conversion failed with return code: " + session.getReturnCode())
+            Logcat.d("Conversion failed with return code: " + session.getReturnCode())
+        }
+    }
+
+    fun convertOpusToMp3(opusFilePath: String, mp3FilePath: String, addLog: (String) -> Unit) {
+        // Construct the FFmpeg command
+        addLog("组装FFmpeg 命令")
+        val cmd = "-i $opusFilePath -acodec libmp3lame $mp3FilePath"
+        addLog("FFmpeg 命令: $cmd")
+        addLog("执行FFmpeg 命令")
+        // Execute the command
+        val session = FFmpegKit.execute(cmd)
+        addLog("执行FFmpeg 命令完成")
+        if (ReturnCode.isSuccess(session.getReturnCode())) {
+            // Handle success case
+            addLog("Conversion Success ")
+            Logcat.d("Conversion Success with return code: " + session.getReturnCode())
+        } else {
+            // Handle failure case
+            addLog("Conversion failed with return code: " + session.getReturnCode())
+            Logcat.d("Conversion failed with return code: " + session.getReturnCode())
         }
     }
 }

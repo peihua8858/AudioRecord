@@ -54,9 +54,11 @@ class MainActivity : ComponentActivity() {
                 AudioRecordManager.getInstance().setPcmFilePath(pcmFile.absolutePath)
                 AudioRecordManager.getInstance().setFilePath(mp3File.absolutePath)
                 AudioRecordManager.getInstance().setAddLog {
+                    Logcat.d(it)
                     logs.add(0, it)
                 }
                 AudioRecordManager.getInstance().setUpdateStatus {
+                    Logcat.d(it)
 //                    logs.add(it)
                 }
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
@@ -125,6 +127,15 @@ class MainActivity : ComponentActivity() {
                             }
                         }) {
                             Text("Pcm转wav")
+                        }
+                        Spacer(modifier = Modifier.padding(10.dp))
+                        Button(onClick = {
+//                            logs.clear()
+                            scope.launch {
+                                AudioRecordManager.getInstance().convertPcmToOpus()
+                            }
+                        }) {
+                            Text("Pcm转Opus")
                         }
                         Spacer(modifier = Modifier.padding(10.dp))
                         Button(onClick = {
