@@ -1,158 +1,197 @@
-package com.peihua.audiorecord;
+package com.peihua.audiorecord
 
-import android.Manifest;
-import android.media.AudioFormat;
-import android.media.AudioRecord;
-import android.media.MediaRecorder;
+import android.Manifest
+import android.media.AudioFormat
+import android.media.AudioRecord
+import android.media.MediaRecorder
+import androidx.annotation.RequiresPermission
+import java.io.BufferedOutputStream
+import java.io.DataOutputStream
+import java.io.File
+import java.io.FileNotFoundException
+import java.io.FileOutputStream
+import java.io.IOException
 
-import androidx.annotation.RequiresPermission;
+/**
+ * 音频录制
+ */
+class AudioRecorder(
+    val simpleRateInHz: Int = SAMPLE_RATE_INHZ,
+    val channelConfig: Int = CHANNEL_CONFIG,
+    val audioFormat: Int = AUDIO_FORMAT,
+) {
+    private var minBuffer = 0
 
-import com.peihua.audiorecord.ui.theme.AudioRecordManager2;
+    var pcmFilePath: String = ""
+    private var isRecording = false
+    private var mChannelCount: Int = 0
+    private var audioRecord: AudioRecord? = null
+    private var outputStream: FileOutputStream? = null
+    private var mLogger: (String) -> Unit = {
 
-import java.io.BufferedOutputStream;
-import java.io.DataOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+    }
+    private var mUpdateStatus: (String) -> Unit = {
 
-public class AudioRecorder {
-    // 声道数。CHANNEL_IN_MONO and CHANNEL_IN_STEREO. 其中CHANNEL_IN_MONO是可以保证在所有设备能够使用的。
-    public static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_STEREO;
+    }
+    val channelCount: Int
+        get() {
+            if (mChannelCount > 0) {
+                return mChannelCount
+            }
+            // 检查并返回声道数量
+            var count = 0;
+            if (channelConfig and AudioFormat.CHANNEL_IN_LEFT != 0) {
+                count++ // 检查左声道
+            }
 
-    // 返回的音频数据的格式。 ENCODING_PCM_8BIT, ENCODING_PCM_16BIT, and ENCODING_PCM_FLOAT.
-    public static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
-    public static final int SAMPLE_RATE_INHZ = 44100;
-    private int minBuffer;
+            if (channelConfig and AudioFormat.CHANNEL_IN_RIGHT != 0) {
+                count++ // 检查右声道
+            }
+            if (channelConfig and AudioFormat.CHANNEL_IN_FRONT != 0) {
+                count++ // 检查右声道
+            }
+            if (channelConfig and AudioFormat.CHANNEL_IN_BACK != 0) {
+                count++ // 检查右声道
+            }
+            if (channelConfig and AudioFormat.CHANNEL_IN_FRONT != 0) {
+                count++ // 检查右声道
+            }
+            return count
+        }
 
-    private String pcmFilePath;
-    private boolean isRecording = false;
-
-    private AudioRecord audioRecord;
-    private FileOutputStream outputStream;
-    private AudioRecordManager2.Logger mLogger;
-
-    public void setPcmFilePath(String pcmFilePath) {
-        this.pcmFilePath = pcmFilePath;
+    fun setLogger(mLogger: (String) -> Unit) {
+        this.mLogger = mLogger
     }
 
-    public void setLogger(AudioRecordManager2.Logger mLogger) {
-        this.mLogger = mLogger;
+    fun setUpdateStatus(mUpdateStatus: (String) -> Unit) {
+        this.mUpdateStatus = mUpdateStatus
     }
 
-    public void setRecording(boolean recording) {
-        isRecording = recording;
+    fun setRecording(recording: Boolean) {
+        isRecording = recording
     }
 
     @RequiresPermission(Manifest.permission.RECORD_AUDIO)
-    public void startRecordingPcm() {
-        minBuffer = AudioRecord.getMinBufferSize(SAMPLE_RATE_INHZ, CHANNEL_CONFIG,
-                AUDIO_FORMAT);
+    fun startRecordingPcm() {
+        minBuffer = AudioRecord.getMinBufferSize(
+            simpleRateInHz, channelConfig,
+            audioFormat
+        )
 
-        addLog("Initializing audio recorder...");
-        audioRecord = new AudioRecord(
-                MediaRecorder.AudioSource.MIC, SAMPLE_RATE_INHZ,
-                CHANNEL_CONFIG,
-                AUDIO_FORMAT, minBuffer);
+        addLog("Initializing audio recorder...")
+        audioRecord = AudioRecord(
+            MediaRecorder.AudioSource.MIC, simpleRateInHz,
+            channelConfig,
+            audioFormat, minBuffer
+        )
 
         // Start audio recording
-        addLog("Creating output file stream");
+        addLog("Creating output file stream")
         try {
-            outputStream = new FileOutputStream(pcmFilePath);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            outputStream = FileOutputStream(pcmFilePath)
+        } catch (e: FileNotFoundException) {
+            e.printStackTrace()
         }
-        BufferedOutputStream bufferedOutputStream = new BufferedOutputStream(outputStream);
-        DataOutputStream dataOutputStream = new DataOutputStream(bufferedOutputStream);
-        addLog("started audio recording");
-        updateStatus("Recording...");
-        audioRecord.startRecording();
+        val bufferedOutputStream = BufferedOutputStream(outputStream)
+        val dataOutputStream = DataOutputStream(bufferedOutputStream)
+        addLog("started audio recording")
+        updateStatus("Recording...")
+        audioRecord!!.startRecording()
 
-        byte[] buffer = new byte[minBuffer]; // Use minBuffer for reading
-        int bytesRead;
+        val buffer = ByteArray(minBuffer) // Use minBuffer for reading
+        var bytesRead: Int
         while (isRecording) {
-            addLog("reading to short array buffer, buffer sze- " + minBuffer);
-            bytesRead = audioRecord.read(buffer, 0, buffer.length);
-            addLog("bytes read=" + bytesRead);
+            addLog("reading to short array buffer, buffer sze- $minBuffer")
+            bytesRead = audioRecord!!.read(buffer, 0, buffer.size)
+            addLog("bytes read=$bytesRead")
             if (bytesRead > 0) {
-                addLog("encoding bytes to mp3 buffer..");
+                addLog("encoding bytes to mp3 buffer..")
                 try {
-                    addLog("writing mp3 buffer to outputstream with " + bytesRead + " bytes");
-                    outputStream.write(buffer, 0, bytesRead);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    break; // Exit if there's an error while writing
+                    addLog("writing mp3 buffer to output stream with $bytesRead bytes")
+                    outputStream!!.write(buffer, 0, bytesRead)
+                } catch (e: IOException) {
+                    e.printStackTrace()
+                    break // Exit if there's an error while writing
                 }
             }
         }
 
-        addLog("stopped recording");
-        updateStatus("Recording stopped");
+        addLog("stopped recording")
+        updateStatus("Recording stopped")
 
-        addLog("flushing final mp3buffer");
+        addLog("flushing final mp3buffer")
         try {
-            dataOutputStream.flush(); // Flush any remaining data in the buffer
-            dataOutputStream.close();  // Close the data output stream
-        } catch (IOException e) {
-            e.printStackTrace();
+            dataOutputStream.flush() // Flush any remaining data in the buffer
+            dataOutputStream.close() // Close the data output stream
+        } catch (e: IOException) {
+            e.printStackTrace()
         }
-        addLog("releasing audio recorder");
-        audioRecord.stop();
-        audioRecord.release();
-        isRecording = false;
+        addLog("releasing audio recorder")
+        audioRecord!!.stop()
+        audioRecord!!.release()
+        isRecording = false
     }
 
     /**
      * 开始录音&#xff0c;返回临时缓存文件&#xff08;.pcm&#xff09;的文件路径
      */
-    public String startRecordAudio() {
-        String audioCacheFilePath = pcmFilePath;
+    fun startRecordAudio(): String? {
+        val audioCacheFilePath = pcmFilePath!!
         try {
             // 获取最小录音缓存大小&#xff0c;
-            int minBufferSize = AudioRecord.getMinBufferSize(SAMPLE_RATE_INHZ, CHANNEL_CONFIG, AUDIO_FORMAT);
-            this.audioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, SAMPLE_RATE_INHZ, CHANNEL_CONFIG, AUDIO_FORMAT, minBufferSize);
+            val minBufferSize =
+                AudioRecord.getMinBufferSize(simpleRateInHz, channelConfig, audioFormat)
+            val audioRecord = AudioRecord(
+                MediaRecorder.AudioSource.MIC,
+                simpleRateInHz,
+                channelConfig,
+                audioFormat,
+                minBufferSize
+            )
+            this.audioRecord = audioRecord
             // 开始录音
-            this.isRecording = true;
-            audioRecord.startRecording();
+            this.isRecording = true
+            this.mChannelCount = audioRecord.channelCount
+            audioRecord!!.startRecording()
 
             // 创建数据流&#xff0c;将缓存导入数据流
-            File file = new File(audioCacheFilePath);
-            Logcat.i( "audio cache pcm file path:" + audioCacheFilePath);
+            val file = File(audioCacheFilePath)
+            Logcat.i("audio cache pcm file path:" + audioCacheFilePath)
             /*
              *  以防万一&#xff0c;看一下这个文件是不是存在&#xff0c;如果存在的话&#xff0c;先删除掉
              */
             if (file.exists()) {
-                file.delete();
+                file.delete()
             }
 
             try {
-                file.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
+                file.createNewFile()
+            } catch (e: IOException) {
+                e.printStackTrace()
             }
 
-            FileOutputStream fos = null;
+            var fos: FileOutputStream? = null
             try {
-                fos = new FileOutputStream(file);
-            } catch (FileNotFoundException e) {
-                e.printStackTrace();
-                Logcat.e( "临时缓存文件未找到");
+                fos = FileOutputStream(file)
+            } catch (e: FileNotFoundException) {
+                e.printStackTrace()
+                Logcat.e("临时缓存文件未找到")
             }
             if (fos == null) {
-                return null;
+                return null
             }
 
-            byte[] data = new byte[minBufferSize];
-            int read;
+            val data = ByteArray(minBufferSize)
+            var read: Int
             if (fos != null) {
                 while (isRecording) {
-                    read = audioRecord.read(data, 0, minBufferSize);
+                    read = audioRecord!!.read(data, 0, minBufferSize)
                     if (AudioRecord.ERROR_INVALID_OPERATION != read) {
                         try {
-                            fos.write(data);
-                            Logcat.i("audioRecordTest", "写录音数据-&gt;" + read);
-                        } catch (IOException e) {
-                            e.printStackTrace();
+                            fos.write(data)
+                            Logcat.i("audioRecordTest", "写录音数据-&gt;" + read)
+                        } catch (e: IOException) {
+                            e.printStackTrace()
                         }
                     }
                 }
@@ -160,27 +199,32 @@ public class AudioRecorder {
 
             try {
                 // 关闭数据流
-                fos.close();
-            } catch (IOException e) {
-                e.printStackTrace();
+                fos.close()
+            } catch (e: IOException) {
+                e.printStackTrace()
             }
-        } catch (IllegalStateException e) {
-            Logcat.w( "需要获取录音权限");
-        } catch (SecurityException e) {
-            Logcat.w( "需要获取录音权限");
+        } catch (e: IllegalStateException) {
+            Logcat.w("需要获取录音权限")
+        } catch (e: SecurityException) {
+            Logcat.w("需要获取录音权限")
         }
-        return audioCacheFilePath;
+        return audioCacheFilePath
     }
 
-    private void addLog(final String log) {
-        if (mLogger != null) {
-            mLogger.addLog(log);
-        }
+    fun addLog(log: String) {
+        mLogger.invoke(log)
     }
 
-    private void updateStatus(final String status) {
-        if (mLogger != null) {
-            mLogger.updateStatus(status);
-        }
+    fun updateStatus(status: String) {
+        mUpdateStatus.invoke(status)
+    }
+
+    companion object {
+        // 声道数。CHANNEL_IN_MONO and CHANNEL_IN_STEREO. 其中CHANNEL_IN_MONO是可以保证在所有设备能够使用的。
+        val CHANNEL_CONFIG: Int = AudioFormat.CHANNEL_IN_STEREO
+
+        // 返回的音频数据的格式。 ENCODING_PCM_8BIT, ENCODING_PCM_16BIT, and ENCODING_PCM_FLOAT.
+        val AUDIO_FORMAT: Int = AudioFormat.ENCODING_PCM_16BIT
+        const val SAMPLE_RATE_INHZ: Int = 44100
     }
 }

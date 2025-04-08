@@ -3,7 +3,6 @@ package com.peihua.audiorecord;
 import com.naman14.androidlame.AndroidLame;
 import com.naman14.androidlame.LameBuilder;
 import com.naman14.androidlame.WaveReader;
-import com.peihua.audiorecord.ui.theme.AudioRecordManager2;
 
 import java.io.BufferedOutputStream;
 import java.io.File;

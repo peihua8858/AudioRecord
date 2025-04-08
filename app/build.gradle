@@ -65,6 +65,8 @@ dependencies {
     implementation 'com.github.naman14:TAndroidLame:1.1'
     implementation 'com.github.lincollincol:PCM-Decoder:1.0'
     implementation 'com.arthenica:ffmpeg-kit-full:6.0-2'
+//    implementation "com.vcpkg.ndk.support:opus:1.3.1"
+    implementation 'com.github.martoreto:opuscodec:v1.2.1.2'
     // https://mvnrepository.com/artifact/nl.bravobit/android-ffmpeg
 //    implementation("nl.bravobit:android-ffmpeg:1.1.7")
 //    implementation 'com.github.naman14:lame4android:1.1'

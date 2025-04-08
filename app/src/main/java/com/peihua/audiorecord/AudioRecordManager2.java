@@ -1,4 +1,4 @@
-package com.peihua.audiorecord.ui.theme;
+package com.peihua.audiorecord;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
@@ -11,12 +11,6 @@ import androidx.annotation.RequiresPermission;
 
 import com.naman14.androidlame.AndroidLame;
 import com.naman14.androidlame.LameBuilder;
-import com.peihua.audiorecord.AudioRecorder;
-import com.peihua.audiorecord.MediaDecoder;
-import com.peihua.audiorecord.PcmConvertMp3;
-import com.peihua.audiorecord.PcmToMp3;
-import com.peihua.audiorecord.PcmToMp3Converter;
-import com.peihua.audiorecord.PcmToWavUtil;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -29,6 +23,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import kotlin.Unit;
 import linc.com.pcmdecoder.PCMDecoder;
 
 public class AudioRecordManager2 {
@@ -42,7 +37,6 @@ public class AudioRecordManager2 {
 
     private AudioRecorder audioRecorder = new AudioRecorder();
     private PcmConvertMp3 pcmConvertMp3 = new PcmConvertMp3();
-    private MediaDecoder mediaDecoder = new MediaDecoder();
     private PcmToWavUtil pcmToWavUtil = new PcmToWavUtil();
 
     int minBuffer;
@@ -77,6 +71,7 @@ public class AudioRecordManager2 {
 
     public void setFilePath(String filePath) {
         this.filePath = filePath;
+//        audioRecorder.setFilePath(filePath);
     }
 
     public void setPcmFilePath(String pcmFilePath) {
@@ -86,7 +81,10 @@ public class AudioRecordManager2 {
 
     public void setLogger(Logger logger) {
         this.mLogger = logger;
-        audioRecorder.setLogger(logger);
+        audioRecorder.setLogger(s->{
+                logger.addLog(s);
+            return Unit.INSTANCE;
+        });
         pcmConvertMp3.setLogger(logger);
     }
 

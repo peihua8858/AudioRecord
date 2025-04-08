@@ -15,6 +15,7 @@ import java.io.IOException;
  * Created by lzt
  * time 2021/6/9 15:42
  * <p>
+ *
  * @author lizhengting
  * 描述&#xff1a;pcm格式的音频转换为wav格式的工具类
  */
@@ -53,18 +54,34 @@ public class PcmToWavUtil {
     /**
      * pcm文件转wav文件
      * <p>
+     *
      * @param inFilename  源文件路径
      * @param outFilename 目标文件路径
      * @param deleteOrg   是否删除源文件
      */
     public void pcmToWav(String inFilename, String outFilename, boolean deleteOrg) {
+        long longSampleRate = mSampleRate;
+        int channels = 2;
+        long byteRate = 16 * mSampleRate * channels / 8;
+        pcmToWav(inFilename, outFilename, deleteOrg, channels, byteRate, longSampleRate);
+    }
+
+    public void pcmToWav(String inFilename, String outFilename,
+                         int channels,
+                         long byteRate,
+                         long sampleRate) {
+        pcmToWav(inFilename, outFilename, false, channels, byteRate, sampleRate);
+    }
+
+    public void pcmToWav(String inFilename, String outFilename,
+                         boolean deleteOrg,
+                         int channels,
+                         long byteRate,
+                         long sampleRate) {
         FileInputStream in;
         FileOutputStream out;
         long totalAudioLen;
         long totalDataLen;
-        long longSampleRate = mSampleRate;
-        int channels = 2;
-        long byteRate = 16 * mSampleRate * channels / 8;
         byte[] data = new byte[mBufferSize];
         try {
             in = new FileInputStream(inFilename);
@@ -73,7 +90,7 @@ public class PcmToWavUtil {
             totalDataLen = totalAudioLen + 36;
 
             writeWaveFileHeader(out, totalAudioLen, totalDataLen,
-                    longSampleRate, channels, byteRate);
+                    sampleRate, channels, byteRate);
             while (in.read(data) != -1) {
                 out.write(data);
             }
@@ -154,8 +171,8 @@ public class PcmToWavUtil {
             FileInputStream fis = new FileInputStream(wavFile);
             byte[] buffer = new byte[1024 * 1024 * 2];//2M
             int len = fis.read(buffer);
-            Logcat.i( "fis len=" + len);
-            Logcat.i( "0:" + (char) buffer[0]);
+            Logcat.i("fis len=" + len);
+            Logcat.i("0:" + (char) buffer[0]);
             int pcmlen = 0;
             pcmlen += buffer[0x2b];
             pcmlen = pcmlen * 256 + buffer[0x2a];
@@ -167,7 +184,7 @@ public class PcmToWavUtil {
 
             int bits = buffer[0x23];
             bits = bits * 256 + buffer[0x22];
-            Logcat.i( "pcmlen=" + pcmlen + ",channel=" + channel + ",bits=" + bits);
+            Logcat.i("pcmlen=" + pcmlen + ",channel=" + channel + ",bits=" + bits);
             AudioTrack at = new AudioTrack(AudioManager.STREAM_MUSIC,
                     mSampleRate * 2,
                     channel,
@@ -187,6 +204,7 @@ public class PcmToWavUtil {
 
     /**
      * 使用MediaPlayer播放文件&#xff0c;并且指定一个当播放完成后会触发的监听器
+     *
      * @param filePath
      * @param onCompletionListener
      */
